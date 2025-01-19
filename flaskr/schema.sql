@@ -1,5 +1,9 @@
 DROP TABLE IF EXISTS user;
 DROP TABLE IF EXISTS post;
+DROP TABLE IF EXISTS Stocks;
+DROP TABLE IF EXISTS Trades;
+DROP TABLE IF EXISTS Accounts;
+DROP TABLE IF EXISTS TradeHistory;
 
 CREATE TABLE user (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -14,4 +18,34 @@ CREATE TABLE post (
   title TEXT NOT NULL,
   body TEXT NOT NULL,
   FOREIGN KEY (author_id) REFERENCES user (id)
+);
+
+CREATE TABLE Stocks (
+  StockID INT PRIMARY KEY,
+  Symbol VARCHAR(10) NOT NULL,
+  Name VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Trades (
+  TradeID INT PRIMARY KEY,
+  StockID INT NOT NULL,
+  TradeDate DATE NOT NULL,
+  TradeTime TIME NOT NULL,
+  TradeType VARCHAR(10) NOT NULL CHECK (TradeType IN ('BUY', 'SELL')),
+  Quantity INT NOT NULL,
+  Price DECIMAL(10, 2) NOT NULL,
+  FOREIGN KEY (StockID) REFERENCES Stocks(StockID)
+);
+
+CREATE TABLE Accounts (
+  AccountID INT PRIMARY KEY,
+  AccountHolder VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE TradeHistory (
+  TradeID INT NOT NULL,
+  AccountID INT NOT NULL,
+  FOREIGN KEY (TradeID) REFERENCES Trades(TradeID),
+  FOREIGN KEY (AccountID) REFERENCES Accounts(AccountID),
+  PRIMARY KEY (TradeID, AccountID)
 );
