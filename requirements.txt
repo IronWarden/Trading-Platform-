@@ -1,2 +1,4 @@
 flask 
 yfinance
+finnhub-python
+python-dotenv

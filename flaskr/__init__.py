@@ -3,6 +3,12 @@ from flask import Flask
 from . import db
 from . import auth
 from . import dashboard
+import yfinance as yf
+import logging
+
+logger = logging.getLogger('my_app')
+logger.setLevel(logging.INFO)
+
 
 def create_app(test_config=None):
     # create and configure the app
@@ -26,10 +32,11 @@ def create_app(test_config=None):
         pass
 
     # a simple page that says hello
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
-    
+    @app.route('/stock')
+    def stock():
+        dat = yf.Ticker("MSFT")
+        logger.info(dat.history(period="1d"))
+        return dat.history(period="1d").to_dict('records')
     app.register_blueprint(auth.bp)
     app.register_blueprint(dashboard.bp)
     app.add_url_rule('/', endpoint='index')
