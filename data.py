@@ -45,6 +45,14 @@ def get_sp500_stock_data():
     return stock_data
 # a simple page that says hello
 
+def get_sp500_stocks():
+    """Fetch S&P 500 stock symbols from Wikipedia."""
+    url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+    tables = pd.read_html(url)
+    sp500_table = tables[0]
+    symbols = sp500_table['Symbol'].tolist()
+    names = sp500_table['Security'].tolist()
+    return list(zip(symbols, names))
 
 def stock():
     sp500_data = get_sp500_stock_data()
@@ -54,6 +62,6 @@ def stock():
 
 
 if __name__ == '__main__':
-    stock = yf.Ticker('GOOG')
-    info = stock.history(period="1d")
-    print(info.to_dict('records'))
+    stocks = get_sp500_stocks()
+    for symbol, name in stocks:
+        print(f"Symbol: {symbol}, Name: {name}")
