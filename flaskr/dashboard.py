@@ -30,18 +30,18 @@ def write_stocks_to_db(stocks):
 
 def get_stocks_names_from_db():
     db = get_db()
-    stocks = db.execute('SELECT Symbol FROM Stocks')
+    stocks = db.execute('SELECT Name FROM Stocks')
     stock_names = [row[0] for row in stocks.fetchall()]
     return stock_names
 
 def get_stocks_symbols_from_db():
     db = get_db()
-    stocks = db.execute('SELECT Name FROM Stocks')
+    stocks = db.execute('SELECT Symbol FROM Stocks')
     stock_symbols = [row[0] for row in stocks.fetchall()]
     return stock_symbols
 
 @bp.route('/home')
 def index():
-    stocks = get_stocks_from_db()
+    stocks_names = get_stocks_from_db()
     stocks = []
     return render_template('dashboard/index.html')
