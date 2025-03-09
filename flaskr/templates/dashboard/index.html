@@ -221,30 +221,16 @@
       <tr>
         <th>Symbol</th>
         <th>Name</th>
-        <th>Price</th>
-        <th>Change</th>
+        <th>Description</th>
       </tr>
     </thead>
     <tbody>
+      {% for stock in stocks %}
       <tr>
-        % for stock in stocks %
-        <td>AAPL</td>
-        <td>Apple Inc.</td>
-        <td>$150.00</td>
-        <td style="color: green;">+1.5%</td>
+        <td>{{stock.symbol}}</td>
+        <td>{{stock.name}}</td>
       </tr>
-      <tr>
-        <td>GOOGL</td>
-        <td>Alphabet Inc.</td>
-        <td>$2800.00</td>
-        <td style="color: red;">-0.8%</td>
-      </tr>
-      <tr>
-        <td>TSLA</td>
-        <td>Tesla Inc.</td>
-        <td>$700.00</td>
-        <td style="color: green;">+2.3%</td>
-      </tr>
+      {% endfor %}
     </tbody>
   </table>
 
