@@ -5,7 +5,6 @@ from flaskr.auth import login_required
 from flaskr.db import get_db
 import pandas as pd
 import yfinance as yf
-import finnhub
 
 bp = Blueprint("dashboard", __name__)
 
@@ -54,6 +53,7 @@ def update_stock_description(description, stock_ticker):
         "UPDATE Stocks SET Description = ? WHERE Symbol = ?",
         (description, stock_ticker),
     )
+    db.commit()
 
 
 def alter_stocks(stock_symbols):
@@ -62,7 +62,6 @@ def alter_stocks(stock_symbols):
         description = str(stock.info.get("longBusinessSummary", ""))
         if description:
             update_stock_description(description, ticker)
-            print(f"successfully updated {ticker}")
 
 
 @bp.route("/home")
