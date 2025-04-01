@@ -10,10 +10,11 @@ bp = Blueprint("dashboard", __name__)
 
 
 class stock:
-    def __init__(self, symbol, name, price=None):
+    def __init__(self, symbol, name, description, price=None):
         self.symbol = symbol
         self.name = name
         self.price = price
+        self.description = description
 
 
 def get_sp500_stocks():
@@ -64,14 +65,23 @@ def alter_stocks(stock_symbols):
             update_stock_description(description, ticker)
 
 
+def get_stock_descriptions_from_db():
+    db = get_db()
+    stocks = db.execute("SELECT Description FROM Stocks")
+    descriptions = [row[0] for row in stocks.fetchall()]
+    return descriptions[:100]
+
+
 @bp.route("/home")
 def index():
     stock_names = get_stocks_names_from_db()
     stocks_symbols = get_stocks_symbols_from_db()
-    alter_stocks(stocks_symbols)
+    stock_descriptions = get_stock_descriptions_from_db()
     stocks = [
-        stock(symbol, name, price=1000)
-        for symbol, name in zip(stocks_symbols, stock_names)
+        stock(symbol, name, description)
+        for symbol, name, description in zip(
+            stocks_symbols, stock_names, stock_descriptions
+        )
     ]
 
     return render_template("dashboard/index.html", stocks=stocks)
