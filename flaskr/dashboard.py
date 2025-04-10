@@ -43,8 +43,8 @@ def get_stocks_names_from_db():
 def get_stocks_symbols_from_db():
     db = get_db()
     stocks = db.execute("SELECT Symbol FROM Stocks")
-    stock_symbols = [row[0] for row in stocks.fetchall()]
-    return stock_symbols
+    stock_tickers = [row[0] for row in stocks.fetchall()]
+    return stock_tickers
 
 
 def update_stock_description(description, stock_ticker):
@@ -56,8 +56,8 @@ def update_stock_description(description, stock_ticker):
     db.commit()
 
 
-def alter_stocks(stock_symbols):
-    for ticker in stock_symbols:
+def alter_stocks(stock_tickers):
+    for ticker in stock_tickers:
         stock = yf.Ticker(ticker)
         description = str(stock.info.get("longBusinessSummary", ""))
         if description:
@@ -68,13 +68,15 @@ def get_stock_descriptions_from_db():
     db = get_db()
     stocks = db.execute("SELECT Description FROM Stocks")
     descriptions = [row[0] for row in stocks.fetchall()]
-    return descriptions[:100]
+    return descriptions
+
+def get_stock_prices():
 
 
 @bp.route("/home")
 def index():
     stock_names = get_stocks_names_from_db()
-    stocks_symbols = get_stocks_symbols_from_db()
+    stock_ticker = get_stocks_symbols_from_db()
     stock_descriptions = get_stock_descriptions_from_db()
     stocks = [
         stock(symbol, name, description)
