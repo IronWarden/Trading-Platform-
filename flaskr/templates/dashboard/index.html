@@ -12,7 +12,7 @@
       {% for stock in stocks %}
       <tr>
         <td>
-          <a href="{{ url_for('stock_detail', StockName=stock.symbol) }}">
+          <a href="{{ url_for('details.stock_detail', StockName=stock.symbol) }}">
             {{stock.symbol}}
           </a>
         </td>

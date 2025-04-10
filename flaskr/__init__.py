@@ -3,6 +3,7 @@ from flask import Flask, redirect, url_for
 from . import db
 from . import auth
 from . import dashboard
+from . import details
 import logging
 
 logger = logging.getLogger("my_app")
@@ -36,6 +37,7 @@ def create_app(test_config=None):
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(dashboard.bp)
+    app.register_blueprint(details.bp)
     app.add_url_rule("/", endpoint="index")
     db.init_app(app)
     return app
