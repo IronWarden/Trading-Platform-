@@ -70,8 +70,6 @@ def get_stock_descriptions_from_db():
     descriptions = [row[0] for row in stocks.fetchall()]
     return descriptions
 
-def get_stock_prices():
-
 
 @bp.route("/home")
 def index():
@@ -81,7 +79,7 @@ def index():
     stocks = [
         stock(symbol, name, description)
         for symbol, name, description in zip(
-            stocks_symbols, stock_names, stock_descriptions
+            stock_ticker, stock_names, stock_descriptions
         )
     ]
 
