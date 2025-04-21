@@ -1,29 +1,21 @@
 import yfinance as yf
 import pandas as pd
-import redis
 import time
 import sqlite3
-
-r = redis.Redis(host="localhost", port=6379, db=0)
+import json
+from pathlib import Path
 
 
 def fetch_stock(tickers):
-    data = yf.download(tickers, period="1d", interval="5m")
-    return data
+    return yf.download(tickers, period="max", interval="1d")
 
 
-def store_redis(stocks_data, stocks_tickers):
-    try:
-        print("storing data in redis")
-        for ticker in stocks_tickers:
-            if ticker in stocks_data.columns.levels[0]:
-                ticker_data = stocks_data[ticker]
-                r.set(f"stock{ticker}", ticker_data.to_json(orient="split"))
-                r.set(
-                    f"stock{ticker}:last_updated", ticker_data.to_json(orient="split")
-                )
-    except Exception as e:
-        print("failed to store data in redis")
+def update_stock_data(df):
+    temp_path = "temp.parquet"
+    df.to_parquet(temp_path, engine="pyarrow")
+
+    # atomic rename to ensure user gets correct data
+    Path(temp_path).replace("data.parquet")
 
 
 if __name__ == "__main__":
@@ -34,5 +26,4 @@ if __name__ == "__main__":
         stock_tickers = [row[0] for row in stocks.fetchall()]
 
     df = fetch_stock(stock_tickers)
-    store_redis(df, stock_tickers)
-    df.to_csv("data.csv")
+    update_stock_data(df)
