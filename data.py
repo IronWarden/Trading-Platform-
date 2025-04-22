@@ -26,4 +26,6 @@ if __name__ == "__main__":
         stock_tickers = [row[0] for row in stocks.fetchall()]
 
     df = fetch_stock(stock_tickers)
+    drop_cols = ["Close"]
     update_stock_data(df)
+    print(df.columns)
