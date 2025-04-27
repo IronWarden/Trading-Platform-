@@ -1,53 +1,109 @@
-import numpy as np
-import pandas as pd
-import sqlite3
-import vectorbt as vbt
+from datetime import datetime
+import backtrader as bt
+import yfinance as yf
 
 
-def fetch_stock(tickers):
-    data = yf.download(tickers, period="1mo")
-    return data
-
-
-if __name__ == "__main__":
-    stock_tickers = []
-
-    with sqlite3.connect("./instance/flaskr.sqlite") as conn:
-        db = conn.cursor()
-        stocks = db.execute("SELECT Symbol FROM Stocks")
-        stock_tickers = [row[0] for row in stocks.fetchall()]
-
-    print(stock_tickers)
-    data = vbt.YFData.download(stock_tickers, start="2010-01-01", end="2023-12-31").get(
-        "close"
+class AllCashSmaStrategy(bt.Strategy):
+    params = (
+        ("fast_period", 10),
+        ("slow_period", 30),
+        ("trail_percent", 3.0),
     )
 
-    # calculate smas
-    sma10 = vbt.ma.run(data, window=10)
-    sma50 = vbt.ma.run(data, window=50)
+    def __init__(self):
+        self.fast_sma = bt.ind.SMA(period=self.p.fast_period)
+        self.slow_sma = bt.ind.SMA(period=self.p.slow_period)
+        self.crossover = bt.ind.CrossOver(self.fast_sma, self.slow_sma)
+        self.highest_high = None
+        self.order = None
 
-    # generate signals
-    entries = sma10.ma_crossed_below(sma50)  # buy when 10-day crosses below 50-day
-    exits = sma10.ma_crossed_above(sma50)  # sell when 10-day crosses above 50-day
+    def notify_order(self, order):
+        if order.status in [order.Submitted, order.Accepted]:
+            return
 
-    # run backtest
-    portfolio = vbt.portfolio.from_signals(
-        data,
-        entries=entries,
-        exits=exits,
-        fees=0.0025,  # 0.25% commission per trade
-        freq="d",  # daily frequency
-    )
+        if order.status in [order.Completed]:
+            if order.isbuy():
+                self.log(
+                    f"BUY EXECUTED, Price: {order.executed.price:.2f}, Cost: {order.executed.value:.2f}, Comm: {order.executed.comm:.2f}"
+                )
+            elif order.issell():
+                self.log(
+                    f"SELL EXECUTED, Price: {order.executed.price:.2f}, Cost: {order.executed.value:.2f}, Comm: {order.executed.comm:.2f}"
+                )
+            self.bar_executed = len(self)
+        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
+            self.log("Order Canceled/Margin/Rejected")
 
-    # print performance metrics
-    print(portfolio.stats())
+        self.order = None
 
-    # plot equity curve
-    portfolio.plot().show()
+    def log(self, txt, dt=None):
+        dt = dt or self.datas[0].datetime.date(0)
+        print(f"{dt.isoformat()}, {txt}")
 
-    # plot trades with smas
-    fig = data.vbt.plot(trace_kwargs=dict(name="price"))
-    sma10.ma.vbt.plot(trace_kwargs=dict(name="10-day sma"), fig=fig)
-    sma50.ma.vbt.plot(trace_kwargs=dict(name="50-day sma"), fig=fig)
-    portfolio.positions.plot(trace_kwargs=dict(visible=false), fig=fig)
-    fig.show()
+    def next(self):
+        if self.order:
+            return
+
+        if not self.position:
+            if self.crossover > 0:
+                cash = self.broker.getcash()
+                price = self.data.close[0]
+                size = int(cash / price)
+
+                if size > 0:
+                    self.log(f"BUY CREATE, Size: {size}, Price: {price:.2f}")
+                    self.order = self.buy(size=size)
+                    self.highest_high = self.data.high[0]
+        else:
+            if self.data.high[0] > self.highest_high:
+                self.highest_high = self.data.high[0]
+
+            stop_price = self.highest_high * (1 - self.p.trail_percent / 100)
+            if self.crossover < 0 or self.data.close[0] < stop_price:
+                self.log(f"SELL CREATE, Price: {self.data.close[0]:.2f}")
+                self.order = self.close()
+
+
+# Initialize Cerebro properly
+cerebro = bt.Cerebro()
+cerebro.broker.setcash(10000.0)
+cerebro.broker.setcommission(commission=0.000)
+
+# Data handling with explicit column names
+data = yf.download("AAPL", "2015-01-01", "2025-01-01", auto_adjust=False)
+data = data[["Open", "High", "Low", "Close", "Volume"]]
+data.columns = ["open", "high", "low", "close", "volume"]
+
+datafeed = bt.feeds.PandasData(
+    dataname=data,
+    datetime=None,
+    open=0,
+    high=1,
+    low=2,
+    close=3,
+    volume=4,
+    openinterest=-1,
+)
+
+cerebro.adddata(datafeed)
+cerebro.addstrategy(AllCashSmaStrategy)
+
+# Add analyzers
+cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe")
+cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
+cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
+
+print(f"Starting Portfolio Value: {cerebro.broker.getvalue():.2f}")
+
+# Run strategy
+results = cerebro.run()
+
+# Print results
+print(f"Final Portfolio Value: {cerebro.broker.getvalue():.2f}")
+strat = results[0]
+print("Sharpe Ratio:", strat.analyzers.sharpe.get_analysis()["sharperatio"])
+print("Annual Return:", strat.analyzers.returns.get_analysis()["rnorm100"])
+print("Max Drawdown:", strat.analyzers.drawdown.get_analysis()["max"]["drawdown"])
+
+# Plot with proper initialization
+cerebro.plot(iplot=False, volume=False)
