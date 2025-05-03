@@ -8,7 +8,7 @@ import yfinance as yf
 bp = Blueprint("dashboard", __name__)
 
 
-class stock:
+class Stock:
     def __init__(self, symbol, name, description, price=None):
         self.symbol = symbol
         self.name = name
@@ -77,7 +77,7 @@ def index():
     stock_ticker = get_stocks_symbols_from_db()
     stock_descriptions = get_stock_descriptions_from_db()
     stocks = [
-        stock(symbol, name, description)
+        Stock(symbol, name, description)
         for symbol, name, description in zip(
             stock_ticker, stock_names, stock_descriptions
         )

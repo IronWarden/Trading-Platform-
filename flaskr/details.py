@@ -3,8 +3,8 @@ from werkzeug.exceptions import abort
 from flaskr.auth import login_required
 from flaskr.db import get_db
 import pandas as pd
-import plotly.graph_objects as go
-
+from bokeh.plotting import figure, show
+from bokeh.models import ColumnDataSource, HoverTool
 
 bp = Blueprint("details", __name__)
 

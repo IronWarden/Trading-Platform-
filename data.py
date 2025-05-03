@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def fetch_stock(tickers):
-    return yf.download(tickers, period="max", interval="1d")
+    return yf.download(tickers, period="10y", interval="1d")
 
 
 def update_stock_data(df):
