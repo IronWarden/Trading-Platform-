@@ -1,7 +1,7 @@
 # Trading System
 
 ## Requirements to set environment
-Miniconda (or Anaconda)
+  Miniconda (or Anaconda)
 
 ## Environment 
   run `conda env create -f environment.yml`
