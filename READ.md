@@ -1,9 +1,7 @@
 # Trading System
 
 ## Requirements to set environment
-Python 3.13
-Miniconda
-Pip 
+Miniconda (or Anaconda)
 
 ## Environment 
   run `conda env create -f environment.yml`
